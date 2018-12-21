@@ -6,18 +6,21 @@ export const changeDescription = event => ({
     type: 'DESCRIPTION_CHANGED',
     payload: event.target.value
 })
+
 export const search = () => {
-    let request = axios.get(`${URL}?sort=-createdAt`)
-    return {
-        type: 'TODO_SEARCHED',
-        payload: request
+    return (dispatch, getState) => {
+        const description = getState().todo.description
+        const search = description ? `&description__regex=/${description}/` : ''
+        const request = axios.get(`${URL}?sort=-createdAt${search}`)
+            .then(resp => dispatch({ type: 'TODO_SEARCHED', payload: resp.data }))
     }
 }
+
 //com REDUX Thunk
 export const add = (description) => {
     return dispatch => {
         axios.post(URL, { description })
-            .then(resp => dispatch({ type: 'TODO_ADDED', payload: resp.data }))
+            .then(resp => dispatch(clear()))
             .then(resp => dispatch(search()))
     }
 }
@@ -45,6 +48,6 @@ export const remove = (todo) => {
 }
 
 export const clear = () => {
-    return [{ type: 'TODO_CLEAR' }]
+    return [{ type: 'TODO_CLEAR' }, search()]
 }
 
